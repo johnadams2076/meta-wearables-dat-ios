@@ -46,14 +46,6 @@ class DisplayViewModel {
     observeRegistration()
   }
 
-  isolated deinit {
-    stateListenerToken = nil
-    coreStateTask?.cancel()
-    sessionErrorTask?.cancel()
-    registrationTask?.cancel()
-    displayStateTask?.cancel()
-  }
-
   // MARK: - Registration Observation
 
   private func observeRegistration() {

@@ -93,14 +93,6 @@ class WearablesViewModel {
     }
   }
 
-  isolated deinit {
-    registrationTask?.cancel()
-    deviceStreamTask?.cancel()
-    for token in compatibilityListenerTokens.values {
-      Task { await token.cancel() }
-    }
-  }
-
   func connectGlasses() async {
     guard registrationState != .registering else { return }
     do {
