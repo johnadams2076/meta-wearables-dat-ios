@@ -24,7 +24,6 @@ jobs:
       CAMERA_SCHEME: CameraAccess
       DISPLAY_PROJECT: samples/DisplayAccess/DisplayAccess.xcodeproj
       DISPLAY_SCHEME: DisplayAccess
-      SWIFT_EXPERIMENT_FLAGS: -enable-experimental-feature IsolatedDeinit
 
     steps:
       - name: Checkout
@@ -72,7 +71,6 @@ jobs:
             -destination "${DESTINATION}" \
             -derivedDataPath "${DERIVED_DATA}" \
             -resultBundlePath "${ARTIFACTS_DIR}/xcresult/CameraAccessBuild.xcresult" \
-            OTHER_SWIFT_FLAGS="\$(inherited) ${SWIFT_EXPERIMENT_FLAGS}" \
             build | tee "${ARTIFACTS_DIR}/logs/camera-build.log"
 
       - name: Build DisplayAccess sample app
@@ -86,7 +84,6 @@ jobs:
             -destination "${DESTINATION}" \
             -derivedDataPath "${DERIVED_DATA}" \
             -resultBundlePath "${ARTIFACTS_DIR}/xcresult/DisplayAccessBuild.xcresult" \
-            OTHER_SWIFT_FLAGS="\$(inherited) ${SWIFT_EXPERIMENT_FLAGS}" \
             build | tee "${ARTIFACTS_DIR}/logs/display-build.log"
 
       - name: Launch built sample apps once on simulator
@@ -123,7 +120,6 @@ jobs:
             -only-testing:CameraAccessTests \
             -derivedDataPath "${DERIVED_DATA}" \
             -resultBundlePath "${ARTIFACTS_DIR}/xcresult/CameraAccessUnitTests.xcresult" \
-            OTHER_SWIFT_FLAGS="\$(inherited) ${SWIFT_EXPERIMENT_FLAGS}" \
             | tee "${ARTIFACTS_DIR}/logs/camera-unit-tests.log"
 
       - name: Run CameraAccess UI tests and record simulator video
@@ -154,7 +150,6 @@ jobs:
             -only-testing:CameraAccessUITests \
             -derivedDataPath "${DERIVED_DATA}" \
             -resultBundlePath "${ARTIFACTS_DIR}/xcresult/CameraAccessUITests.xcresult" \
-            OTHER_SWIFT_FLAGS="\$(inherited) ${SWIFT_EXPERIMENT_FLAGS}" \
             | tee "${ARTIFACTS_DIR}/logs/camera-ui-tests.log"
 
       - name: Upload CI artifacts (logs, xcresult, and video)

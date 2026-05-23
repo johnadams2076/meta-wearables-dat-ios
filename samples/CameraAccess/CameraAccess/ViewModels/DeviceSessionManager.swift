@@ -30,12 +30,6 @@ final class DeviceSessionManager {
     startDeviceMonitoring()
   }
 
-  isolated deinit {
-    deviceMonitorTask?.cancel()
-    stateObserverTask?.cancel()
-    deviceSession?.stop()
-  }
-
   /// Stops the device session and cancels monitoring. Call before releasing.
   /// The stateObserverTask handles cleanup when .stopped arrives.
   func cleanup() {

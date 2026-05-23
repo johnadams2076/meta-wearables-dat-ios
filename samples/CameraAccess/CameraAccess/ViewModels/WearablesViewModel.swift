@@ -56,12 +56,6 @@ class WearablesViewModel {
     }
   }
 
-  isolated deinit {
-    registrationTask?.cancel()
-    deviceStreamTask?.cancel()
-    setupDeviceStreamTask?.cancel()
-  }
-
   private func setupDeviceStream() async {
     if let task = deviceStreamTask, !task.isCancelled {
       task.cancel()
