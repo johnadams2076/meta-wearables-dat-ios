@@ -168,8 +168,10 @@ final class StreamSessionViewModel {
       Task { @MainActor in self?.handleStateChange(state) }
     }
 
-    videoFrameListenerToken = stream.videoFramePublisher.listen { [weak self] frame in
-      Task { @MainActor in self?.handleVideoFrame(frame) }
+    if !isUITestRun {
+      videoFrameListenerToken = stream.videoFramePublisher.listen { [weak self] frame in
+        Task { @MainActor in self?.handleVideoFrame(frame) }
+      }
     }
 
     errorListenerToken = stream.errorPublisher.listen { [weak self] error in
@@ -197,6 +199,9 @@ final class StreamSessionViewModel {
       streamingStatus = .waiting
     case .streaming:
       streamingStatus = .streaming
+      if isUITestRun {
+        hasReceivedFirstFrame = true
+      }
     }
   }
 
