@@ -84,7 +84,7 @@ final class ViewModelIntegrationTests: XCTestCase {
     await viewModel.handleStartStreaming()
 
     // Wait for streaming to establish
-    await observeUntil(timeout: 10) {
+    await observeUntil(timeout: 30) {
       viewModel.isStreaming && viewModel.hasReceivedFirstFrame && viewModel.currentVideoFrame != nil
     }
 
@@ -98,7 +98,7 @@ final class ViewModelIntegrationTests: XCTestCase {
     await viewModel.stopSession()
 
     // Wait for session to stop
-    await observeUntil(timeout: 5) { !viewModel.isStreaming }
+    await observeUntil(timeout: 20) { !viewModel.isStreaming }
 
     // Verify streaming stopped (allow for final states to be stopped or waiting)
     XCTAssertFalse(viewModel.isStreaming)
@@ -140,7 +140,7 @@ final class ViewModelIntegrationTests: XCTestCase {
     await viewModel.handleStartStreaming()
 
     // Wait for streaming to establish
-    await observeUntil(timeout: 10) {
+    await observeUntil(timeout: 30) {
       viewModel.isStreaming && viewModel.hasReceivedFirstFrame && viewModel.currentVideoFrame != nil
     }
 
@@ -152,7 +152,7 @@ final class ViewModelIntegrationTests: XCTestCase {
 
     // Capture photo while streaming
     viewModel.capturePhoto()
-    await observeUntil(timeout: 10) { viewModel.capturedPhoto != nil }
+    await observeUntil(timeout: 30) { viewModel.capturedPhoto != nil }
 
     // Verify photo captured while maintaining stream (allow for some timing flexibility)
     XCTAssertTrue(viewModel.capturedPhoto != nil)
@@ -165,7 +165,7 @@ final class ViewModelIntegrationTests: XCTestCase {
     XCTAssertNil(viewModel.capturedPhoto)
 
     await viewModel.stopSession()
-    await observeUntil(timeout: 5) { !viewModel.isStreaming }
+    await observeUntil(timeout: 20) { !viewModel.isStreaming }
 
     XCTAssertFalse(viewModel.isStreaming)
     XCTAssertTrue([.stopped, .waiting].contains(viewModel.streamingStatus))

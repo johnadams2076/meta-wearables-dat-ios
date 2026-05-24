@@ -121,8 +121,8 @@ jobs:
             -scheme "${CAMERA_SCHEME}" \
             -destination "${DESTINATION}" \
             -only-testing:CameraAccessTests \
-            -retry-tests-on-failure \
-            -test-iterations 2 \
+            -parallel-testing-enabled NO \
+            -maximum-concurrent-test-simulator-destinations 1 \
             -derivedDataPath "${DERIVED_DATA}" \
             -resultBundlePath "${ARTIFACTS_DIR}/xcresult/CameraAccessUnitTests.xcresult" \
             | tee "${ARTIFACTS_DIR}/logs/camera-unit-tests.log"
@@ -153,6 +153,8 @@ jobs:
             -scheme "${CAMERA_SCHEME}" \
             -destination "${DESTINATION}" \
             -only-testing:CameraAccessUITests \
+            -parallel-testing-enabled NO \
+            -maximum-concurrent-test-simulator-destinations 1 \
             -retry-tests-on-failure \
             -test-iterations 2 \
             -derivedDataPath "${DERIVED_DATA}" \
