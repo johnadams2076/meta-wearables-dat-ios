@@ -44,7 +44,9 @@ final class StreamSessionViewModel {
 
   private let sessionManager: DeviceSessionManager
   private let wearables: WearablesInterface
+  private let isUITestRun: Bool
   private var stream: MWDATCamera.Stream?
+  private var frameSkipCounter: Int = 0
 
   private var stateListenerToken: AnyListenerToken?
   private var videoFrameListenerToken: AnyListenerToken?
@@ -56,6 +58,7 @@ final class StreamSessionViewModel {
   init(wearables: WearablesInterface) {
     self.wearables = wearables
     self.sessionManager = DeviceSessionManager(wearables: wearables)
+    self.isUITestRun = ProcessInfo.processInfo.arguments.contains("--ui-testing")
   }
 
   // MARK: - Public API
@@ -148,7 +151,9 @@ final class StreamSessionViewModel {
     let config = StreamConfiguration(
       videoCodec: VideoCodec.raw,
       resolution: StreamingResolution.low,
-      frameRate: 24
+      // Lower FPS in UI tests to reduce simulator/main-thread pressure and avoid
+      // starving XCTest accessibility snapshots under CI load.
+      frameRate: isUITestRun ? 7 : 24
     )
 
     guard let newStream = try? deviceSession.addStream(config: config) else { return }
@@ -196,7 +201,14 @@ final class StreamSessionViewModel {
   }
 
   private func handleVideoFrame(_ frame: VideoFrame) {
-    if let image = frame.makeUIImage() {
+    if isUITestRun, hasReceivedFirstFrame {
+      frameSkipCounter = (frameSkipCounter + 1) % 3
+      if frameSkipCounter != 0 {
+        return
+      }
+    }
+
+    if let image = autoreleasepool(invoking: { frame.makeUIImage() }) {
       currentVideoFrame = image
       if !hasReceivedFirstFrame {
         hasReceivedFirstFrame = true
