@@ -127,9 +127,21 @@ final class CameraAccessUITests: XCTestCase {
         continue
       }
 
-      if element.exists {
-        element.tap()
+      let frame = element.frame
+      if frame.width > 0,
+        frame.height > 0,
+        frame.origin.x.isFinite,
+        frame.origin.y.isFinite,
+        frame.size.width.isFinite,
+        frame.size.height.isFinite
+      {
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         return
+      }
+
+      if element.exists {
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        continue
       }
 
       if attempt < retries {
