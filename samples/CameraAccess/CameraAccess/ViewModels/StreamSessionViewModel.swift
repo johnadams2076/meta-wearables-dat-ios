@@ -105,6 +105,14 @@ final class StreamSessionViewModel {
       showPhotoCaptureError = true
       return
     }
+
+    if isUITestRun {
+      capturedPhoto = makeUITestPlaceholderImage()
+      showPhotoPreview = true
+      isCapturingPhoto = false
+      return
+    }
+
     isCapturingPhoto = true
     let success = stream?.capturePhoto(format: .jpeg) ?? false
     if !success {
@@ -233,6 +241,14 @@ final class StreamSessionViewModel {
     if let image = UIImage(data: data.data) {
       capturedPhoto = image
       showPhotoPreview = true
+    }
+  }
+
+  private func makeUITestPlaceholderImage() -> UIImage {
+    let renderer = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2))
+    return renderer.image { context in
+      UIColor.systemBlue.setFill()
+      context.fill(CGRect(x: 0, y: 0, width: 2, height: 2))
     }
   }
 
