@@ -135,7 +135,9 @@ final class CameraAccessUITests: XCTestCase {
         frame.size.width.isFinite,
         frame.size.height.isFinite
       {
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let tapPoint = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+          .withOffset(CGVector(dx: frame.midX, dy: frame.midY))
+        tapPoint.tap()
         return
       }
 
