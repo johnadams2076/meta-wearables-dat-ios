@@ -105,8 +105,8 @@ final class CameraAccessUITests: XCTestCase {
 
   /// Starts streaming and waits for the StreamView to appear.
   private func startStreaming(timeout: TimeInterval = 15) {
-    let startButton = waitForStartStreamingEnabled(timeout: timeout)
-    tapWithRetry(elementProvider: { startButton }, elementName: "Start streaming")
+    _ = waitForStartStreamingEnabled(timeout: timeout)
+    tapWithRetry(elementProvider: { self.app.buttons["Start streaming"] }, elementName: "Start streaming")
 
     let stopButton = app.buttons["Stop streaming"]
     XCTAssertTrue(stopButton.waitForExistence(timeout: timeout), "Stop streaming button should appear after starting")
@@ -127,24 +127,8 @@ final class CameraAccessUITests: XCTestCase {
         continue
       }
 
-      if !element.isHittable {
-        let hittablePredicate = NSPredicate(format: "hittable == true")
-        let expectation = XCTNSPredicateExpectation(predicate: hittablePredicate, object: element)
-        _ = XCTWaiter.wait(for: [expectation], timeout: 2)
-      }
-
-      if element.exists && element.isHittable {
+      if element.exists {
         element.tap()
-        return
-      }
-
-      let frame = element.frame
-      if frame.width > 0,
-        frame.height > 0,
-        frame.origin.x.isFinite,
-        frame.origin.y.isFinite
-      {
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         return
       }
 
