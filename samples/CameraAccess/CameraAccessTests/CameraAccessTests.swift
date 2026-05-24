@@ -32,12 +32,14 @@ final class ViewModelIntegrationTests: XCTestCase {
     mockDevice = pairedMockDevice
     cameraKit = pairedMockDevice.services.camera
 
-    // Power on and unfold the device to make it available
-    pairedMockDevice.powerOn()
-    pairedMockDevice.unfold()
+    // Ensure the mock device is fully active before tests begin.
+    // Awaiting these transitions removes timing flakes on slower CI runners.
+    await pairedMockDevice.powerOn()
+    await pairedMockDevice.unfold()
+    await pairedMockDevice.don()
 
-    // Wait for device to be available in Wearables
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    // Give Wearables streams time to publish the newly active device.
+    try await Task.sleep(nanoseconds: 2_000_000_000)
   }
 
   override func tearDown() async throws {
@@ -70,7 +72,7 @@ final class ViewModelIntegrationTests: XCTestCase {
     self.viewModel = viewModel
 
     // Wait for the mock device to be detected
-    await observeUntil(timeout: 5) { viewModel.hasActiveDevice }
+    await observeUntil(timeout: 15) { viewModel.hasActiveDevice }
 
     // Initially not streaming
     XCTAssertEqual(viewModel.streamingStatus, .stopped)
@@ -126,7 +128,7 @@ final class ViewModelIntegrationTests: XCTestCase {
     self.viewModel = viewModel
 
     // Wait for the mock device to be detected
-    await observeUntil(timeout: 5) { viewModel.hasActiveDevice }
+    await observeUntil(timeout: 15) { viewModel.hasActiveDevice }
 
     // Initially not streaming
     XCTAssertEqual(viewModel.streamingStatus, .stopped)

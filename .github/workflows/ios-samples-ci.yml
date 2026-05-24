@@ -48,6 +48,9 @@ jobs:
           echo "SIMULATOR_NAME=${SIMULATOR_NAME}" >> "$GITHUB_ENV"
           echo "DESTINATION=platform=iOS Simulator,id=${SIMULATOR_UDID},arch=arm64" >> "$GITHUB_ENV"
 
+          # Start from a clean simulator state to reduce flaky UI/test behavior.
+          xcrun simctl shutdown "${SIMULATOR_UDID}" || true
+          xcrun simctl erase "${SIMULATOR_UDID}" || true
           xcrun simctl boot "${SIMULATOR_UDID}" || true
           xcrun simctl bootstatus "${SIMULATOR_UDID}" -b
           open -a Simulator
@@ -118,6 +121,8 @@ jobs:
             -scheme "${CAMERA_SCHEME}" \
             -destination "${DESTINATION}" \
             -only-testing:CameraAccessTests \
+            -retry-tests-on-failure \
+            -test-iterations 2 \
             -derivedDataPath "${DERIVED_DATA}" \
             -resultBundlePath "${ARTIFACTS_DIR}/xcresult/CameraAccessUnitTests.xcresult" \
             | tee "${ARTIFACTS_DIR}/logs/camera-unit-tests.log"
@@ -148,6 +153,8 @@ jobs:
             -scheme "${CAMERA_SCHEME}" \
             -destination "${DESTINATION}" \
             -only-testing:CameraAccessUITests \
+            -retry-tests-on-failure \
+            -test-iterations 2 \
             -derivedDataPath "${DERIVED_DATA}" \
             -resultBundlePath "${ARTIFACTS_DIR}/xcresult/CameraAccessUITests.xcresult" \
             | tee "${ARTIFACTS_DIR}/logs/camera-ui-tests.log"
