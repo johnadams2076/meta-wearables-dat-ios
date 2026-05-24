@@ -106,10 +106,54 @@ final class CameraAccessUITests: XCTestCase {
   /// Starts streaming and waits for the StreamView to appear.
   private func startStreaming(timeout: TimeInterval = 15) {
     let startButton = waitForStartStreamingEnabled(timeout: timeout)
-    startButton.tap()
+    tapWithRetry(elementProvider: { startButton }, elementName: "Start streaming")
 
     let stopButton = app.buttons["Stop streaming"]
     XCTAssertTrue(stopButton.waitForExistence(timeout: timeout), "Stop streaming button should appear after starting")
+  }
+
+  /// Taps an element using a fresh query each attempt to avoid stale element
+  /// references after interruption handling on slower CI runners.
+  private func tapWithRetry(
+    elementProvider: () -> XCUIElement,
+    elementName: String,
+    existenceTimeout: TimeInterval = 15,
+    retries: Int = 3
+  ) {
+    for attempt in 1...retries {
+      let element = elementProvider()
+
+      guard element.waitForExistence(timeout: existenceTimeout) else {
+        continue
+      }
+
+      if !element.isHittable {
+        let hittablePredicate = NSPredicate(format: "hittable == true")
+        let expectation = XCTNSPredicateExpectation(predicate: hittablePredicate, object: element)
+        _ = XCTWaiter.wait(for: [expectation], timeout: 2)
+      }
+
+      if element.exists && element.isHittable {
+        element.tap()
+        return
+      }
+
+      let frame = element.frame
+      if frame.width > 0,
+        frame.height > 0,
+        frame.origin.x.isFinite,
+        frame.origin.y.isFinite
+      {
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        return
+      }
+
+      if attempt < retries {
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+      }
+    }
+
+    XCTFail("Failed to tap \(elementName) after \(retries) attempts")
   }
 
   // MARK: - Device Pairing & Navigation Tests
@@ -201,8 +245,7 @@ final class CameraAccessUITests: XCTestCase {
     startStreaming()
 
     // Stop streaming
-    let stopButton = app.buttons["Stop streaming"]
-    stopButton.tap()
+    tapWithRetry(elementProvider: { self.app.buttons["Stop streaming"] }, elementName: "Stop streaming")
 
     // Should return to NonStreamView
     let startButton = app.buttons["Start streaming"]
@@ -218,9 +261,7 @@ final class CameraAccessUITests: XCTestCase {
     startStreaming()
 
     // Tap the capture button
-    let captureButton = app.buttons["capture_photo_button"]
-    XCTAssertTrue(captureButton.waitForExistence(timeout: 10), "Capture button should be visible during streaming")
-    captureButton.tap()
+    tapWithRetry(elementProvider: { self.app.buttons["capture_photo_button"] }, elementName: "capture_photo_button")
 
     // Photo preview should appear
     let closeButton = app.buttons["close_preview_button"]
@@ -234,7 +275,7 @@ final class CameraAccessUITests: XCTestCase {
     XCTAssertTrue(stopButton.waitForExistence(timeout: 10), "Should still be streaming after dismissing photo preview")
 
     // Stop streaming
-    stopButton.tap()
+    tapWithRetry(elementProvider: { self.app.buttons["Stop streaming"] }, elementName: "Stop streaming")
 
     // Should return to NonStreamView
     let startButton = app.buttons["Start streaming"]
