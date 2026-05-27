@@ -1,0 +1,145 @@
+name: CameraAccess TestFlight Deploy
+
+"on":
+  workflow_dispatch:
+  push:
+    tags:
+      - "cameraaccess-v*"
+
+jobs:
+  deploy:
+    name: Build And Upload TestFlight
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    env:
+      PROJECT_PATH: samples/CameraAccess/CameraAccess.xcodeproj
+      SCHEME: CameraAccess
+      ARCHIVE_PATH: ${{ runner.temp }}/build/CameraAccess.xcarchive
+      EXPORT_PATH: ${{ runner.temp }}/build/export
+      SIGNING_DIR: ${{ runner.temp }}/signing
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Decode signing assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p "${SIGNING_DIR}"
+
+          echo "${{ secrets.IOS_P12_BASE64 }}" | base64 --decode > "${SIGNING_DIR}/ios_distribution.p12"
+          echo "${{ secrets.IOS_MOBILEPROVISION_BASE64 }}" | base64 --decode > "${SIGNING_DIR}/profile.mobileprovision"
+          echo "${{ secrets.APPSTORE_API_KEY_P8_BASE64 }}" | base64 --decode > "${SIGNING_DIR}/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8"
+
+      - name: Install certificate and provisioning profile
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          KEYCHAIN_PATH="${RUNNER_TEMP}/app-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+
+          security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+          security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
+          security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+          security import "${SIGNING_DIR}/ios_distribution.p12" -P "${{ secrets.IOS_P12_PASSWORD }}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
+
+          security list-keychains -d user -s "${KEYCHAIN_PATH}" $(security list-keychains -d user | tr -d '"')
+          security default-keychain -d user -s "${KEYCHAIN_PATH}"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+
+          mkdir -p "${HOME}/Library/MobileDevice/Provisioning Profiles"
+          cp "${SIGNING_DIR}/profile.mobileprovision" "${HOME}/Library/MobileDevice/Provisioning Profiles/"
+
+          security cms -D -i "${SIGNING_DIR}/profile.mobileprovision" > "${SIGNING_DIR}/profile.plist"
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "${SIGNING_DIR}/profile.plist")
+          echo "PROFILE_NAME=${PROFILE_NAME}" >> "${GITHUB_ENV}"
+
+      - name: Archive app for iOS devices
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          xcodebuild \
+            -project "${PROJECT_PATH}" \
+            -scheme "${SCHEME}" \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "${ARCHIVE_PATH}" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ secrets.APP_BUNDLE_ID }}" \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
+            clean archive
+
+      - name: Export IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > "${SIGNING_DIR}/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+            <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>teamID</key>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>signingCertificate</key>
+              <string>Apple Distribution</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                <key>${{ secrets.APP_BUNDLE_ID }}</key>
+                <string>${PROFILE_NAME}</string>
+              </dict>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+            </dict>
+          </plist>
+          EOF
+
+          mkdir -p "${EXPORT_PATH}"
+
+          xcodebuild \
+            -exportArchive \
+            -archivePath "${ARCHIVE_PATH}" \
+            -exportPath "${EXPORT_PATH}" \
+            -exportOptionsPlist "${SIGNING_DIR}/ExportOptions.plist"
+
+          IPA_PATH=$(find "${EXPORT_PATH}" -maxdepth 1 -name "*.ipa" | head -n 1)
+          if [[ -z "${IPA_PATH}" ]]; then
+            echo "No IPA was exported."
+            exit 1
+          fi
+          echo "IPA_PATH=${IPA_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Upload IPA to TestFlight
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p "${HOME}/.appstoreconnect/private_keys"
+          cp "${SIGNING_DIR}/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8" "${HOME}/.appstoreconnect/private_keys/"
+
+          xcrun altool \
+            --upload-app \
+            --type ios \
+            --file "${IPA_PATH}" \
+            --apiKey "${{ secrets.APPSTORE_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APPSTORE_ISSUER_ID }}" \
+            --verbose
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cameraaccess-ipa
+          path: ${{ env.IPA_PATH }}
+          if-no-files-found: error
