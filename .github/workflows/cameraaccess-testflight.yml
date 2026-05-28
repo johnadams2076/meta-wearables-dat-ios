@@ -11,6 +11,7 @@ jobs:
   deploy:
     name: Build And Upload TestFlight
     runs-on: macos-latest
+    environment: metawearables
     timeout-minutes: 60
 
     env:
