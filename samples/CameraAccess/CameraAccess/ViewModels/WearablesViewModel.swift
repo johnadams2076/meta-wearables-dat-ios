@@ -105,9 +105,9 @@ class WearablesViewModel {
       do {
         try await wearables.startRegistration()
       } catch let error as RegistrationError {
-        showError(error.description)
+        showError(error, context: .registrationStart)
       } catch {
-        showError(error.localizedDescription)
+        showError(error, context: .registrationStart)
       }
     }
   }
@@ -117,9 +117,9 @@ class WearablesViewModel {
       do {
         try await wearables.startUnregistration()
       } catch let error as UnregistrationError {
-        showError(error.description)
+        showError(error, context: .unregistration)
       } catch {
-        showError(error.localizedDescription)
+        showError(error, context: .unregistration)
       }
     }
   }
@@ -128,7 +128,7 @@ class WearablesViewModel {
     do {
       try await wearables.openFirmwareUpdate()
     } catch {
-      showError(error.description)
+      showError(error, context: .firmwareUpdate)
     }
   }
 
@@ -136,8 +136,12 @@ class WearablesViewModel {
     do {
       try await wearables.openDATGlassesAppUpdate()
     } catch {
-      showError(error.description)
+      showError(error, context: .datAppUpdate)
     }
+  }
+
+  func showError(_ error: Error, context: AppErrorContext) {
+    showError(AppErrorFormatter.message(for: error, context: context))
   }
 
   func showError(_ error: String) {

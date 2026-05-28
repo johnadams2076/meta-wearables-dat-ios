@@ -71,12 +71,12 @@ final class StreamSessionViewModel {
         status = try await wearables.requestPermission(permission)
       }
       guard status == .granted else {
-        showError("Permission denied")
+        showError("Camera permission was not granted in Meta AI. Grant permission and try again.")
         return
       }
       await startSession()
     } catch {
-      showError("Permission error: \(error.description)")
+      showError(AppErrorFormatter.message(for: error, context: .permission))
     }
   }
 
@@ -144,10 +144,10 @@ final class StreamSessionViewModel {
       requiresDATAppUpdate = false
     } catch DeviceSessionError.datAppOnTheGlassesUpdateRequired {
       requiresDATAppUpdate = true
-      showError(DeviceSessionError.datAppOnTheGlassesUpdateRequired.localizedDescription)
+      showError("The app on glasses must be updated before streaming can start. Open Meta AI and update the glasses app.")
       return
     } catch {
-      showError("Failed to start session: \(error.localizedDescription)")
+      showError(AppErrorFormatter.message(for: error, context: .deviceSession))
       return
     }
 
@@ -230,7 +230,7 @@ final class StreamSessionViewModel {
   }
 
   private func handleError(_ error: StreamError) {
-    let message = error.localizedDescription
+    let message = AppErrorFormatter.message(for: error, context: .stream)
     if message != errorMessage {
       showError(message)
     }
