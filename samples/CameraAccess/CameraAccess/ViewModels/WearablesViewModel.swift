@@ -101,24 +101,30 @@ class WearablesViewModel {
 
   func connectGlasses() {
     guard registrationState != .registering else { return }
+    AppLogger.shared.log("Starting registration", category: "Registration", level: .info)
     Task { @MainActor in
       do {
         try await wearables.startRegistration()
       } catch let error as RegistrationError {
+        AppLogger.shared.logError(error, context: .registrationStart)
         showError(error, context: .registrationStart)
       } catch {
+        AppLogger.shared.logError(error, context: .registrationStart)
         showError(error, context: .registrationStart)
       }
     }
   }
 
   func disconnectGlasses() {
+    AppLogger.shared.log("Starting unregistration", category: "Registration", level: .info)
     Task { @MainActor in
       do {
         try await wearables.startUnregistration()
       } catch let error as UnregistrationError {
+        AppLogger.shared.logError(error, context: .unregistration)
         showError(error, context: .unregistration)
       } catch {
+        AppLogger.shared.logError(error, context: .unregistration)
         showError(error, context: .unregistration)
       }
     }
@@ -128,6 +134,7 @@ class WearablesViewModel {
     do {
       try await wearables.openFirmwareUpdate()
     } catch {
+      AppLogger.shared.logError(error, context: .firmwareUpdate)
       showError(error, context: .firmwareUpdate)
     }
   }
@@ -136,6 +143,7 @@ class WearablesViewModel {
     do {
       try await wearables.openDATGlassesAppUpdate()
     } catch {
+      AppLogger.shared.logError(error, context: .datAppUpdate)
       showError(error, context: .datAppUpdate)
     }
   }

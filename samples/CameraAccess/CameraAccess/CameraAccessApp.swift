@@ -29,6 +29,7 @@ struct CameraAccessApp: App {
   // Debug menu for simulating device connections during development
   @State private var debugMenuViewModel = DebugMenuViewModel(mockDeviceKit: MockDeviceKit.shared)
   #endif
+  @State private var showLogViewer = false
   private let wearables: WearablesInterface
   @State private var wearablesViewModel: WearablesViewModel
 
@@ -80,6 +81,14 @@ struct CameraAccessApp: App {
         DebugMenuView(debugMenuViewModel: debugMenuViewModel)
       }
         #endif
+
+      // Shake the device (any build, including TestFlight) to open the diagnostic log viewer.
+      .sheet(isPresented: $showLogViewer) {
+        LogViewerView()
+      }
+      .onReceive(NotificationCenter.default.publisher(for: .deviceDidShake)) { _ in
+        showLogViewer = true
+      }
 
       // Registration view handles the flow for connecting to the glasses via Meta AI
       RegistrationView(viewModel: wearablesViewModel)

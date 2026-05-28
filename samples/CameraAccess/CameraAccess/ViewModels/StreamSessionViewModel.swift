@@ -65,17 +65,22 @@ final class StreamSessionViewModel {
 
   func handleStartStreaming() async {
     let permission = Permission.camera
+    AppLogger.shared.log("Checking camera permission", category: "Stream", level: .debug)
     do {
       var status = try await wearables.checkPermissionStatus(permission)
       if status != .granted {
+        AppLogger.shared.log("Requesting camera permission", category: "Stream", level: .info)
         status = try await wearables.requestPermission(permission)
       }
       guard status == .granted else {
+        AppLogger.shared.log("Camera permission denied", category: "Stream", level: .error)
         showError("Camera permission was not granted in Meta AI. Grant permission and try again.")
         return
       }
+      AppLogger.shared.log("Camera permission granted — starting session", category: "Stream", level: .info)
       await startSession()
     } catch {
+      AppLogger.shared.logError(error, context: .permission)
       showError(AppErrorFormatter.message(for: error, context: .permission))
     }
   }
@@ -139,14 +144,18 @@ final class StreamSessionViewModel {
 
   private func startSession() async {
     let deviceSession: DeviceSession
+    AppLogger.shared.log("Requesting device session", category: "Session", level: .debug)
     do {
       deviceSession = try await sessionManager.getSession()
       requiresDATAppUpdate = false
+      AppLogger.shared.log("Device session started successfully", category: "Session", level: .info)
     } catch DeviceSessionError.datAppOnTheGlassesUpdateRequired {
       requiresDATAppUpdate = true
+      AppLogger.shared.log("DAT glasses app update required", category: "Session", level: .warning)
       showError("The app on glasses must be updated before streaming can start. Open Meta AI and update the glasses app.")
       return
     } catch {
+      AppLogger.shared.logError(error, context: .deviceSession)
       showError(AppErrorFormatter.message(for: error, context: .deviceSession))
       return
     }
@@ -199,13 +208,18 @@ final class StreamSessionViewModel {
   }
 
   private func handleStateChange(_ state: StreamState) {
+    AppLogger.shared.log("Stream state → \(state)", category: "Stream", level: .debug)
     switch state {
     case .stopped:
       currentVideoFrame = nil
       streamingStatus = .stopped
-    case .waitingForDevice, .starting, .stopping, .paused:
+    case .waitingForDevice:
+      AppLogger.shared.log("Waiting for glasses — ensure Bluetooth is on and glasses are in range", category: "Stream", level: .warning)
+      streamingStatus = .waiting
+    case .starting, .stopping, .paused:
       streamingStatus = .waiting
     case .streaming:
+      AppLogger.shared.log("Streaming started", category: "Stream", level: .info)
       streamingStatus = .streaming
       if isUITestRun {
         hasReceivedFirstFrame = true
@@ -231,6 +245,7 @@ final class StreamSessionViewModel {
 
   private func handleError(_ error: StreamError) {
     let message = AppErrorFormatter.message(for: error, context: .stream)
+    AppLogger.shared.logError(error, context: .stream)
     if message != errorMessage {
       showError(message)
     }

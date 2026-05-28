@@ -74,6 +74,9 @@
 		<string>com.meta.ar.wearable</string>
 	</array>
 	<!-- End required section for Device Access Toolkit Apps -->
+	<!-- Export compliance: app does not use encryption beyond iOS system APIs -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs access to save photos captured from your glasses.</string>
 	<key>NSCameraUsageDescription</key>

@@ -36,10 +36,14 @@ struct RegistrationView: View {
           do {
             // Pass the callback URL to the DAT SDK for processing
             // This handles registration completion and permission grant responses
+            AppLogger.shared.log("Handling Meta AI callback URL", category: "Registration", level: .debug)
             _ = try await Wearables.shared.handleUrl(url)
+            AppLogger.shared.log("Meta AI callback handled successfully", category: "Registration", level: .info)
           } catch let error as RegistrationError {
+            AppLogger.shared.logError(error, context: .registrationCallback)
             viewModel.showError(error, context: .registrationCallback)
           } catch {
+            AppLogger.shared.logError(error, context: .registrationCallback)
             viewModel.showError(error, context: .registrationCallback)
           }
         }

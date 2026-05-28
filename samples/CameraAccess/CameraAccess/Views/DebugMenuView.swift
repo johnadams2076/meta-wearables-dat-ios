@@ -26,6 +26,19 @@ struct DebugMenuView: View {
       Spacer()
       VStack {
         Spacer()
+        // Log viewer button
+        Button(action: {
+          debugMenuViewModel.showLogViewer = true
+        }) {
+          Image(systemName: "doc.text.magnifyingglass")
+            .foregroundStyle(.white)
+            .padding()
+            .background(.blue.opacity(0.8))
+            .clipShape(Circle())
+            .shadow(radius: 4)
+        }
+        .accessibilityIdentifier("log_viewer_button")
+        // Mock device menu button
         Button(action: {
           debugMenuViewModel.showDebugMenu = true
         }) {
@@ -39,6 +52,9 @@ struct DebugMenuView: View {
         Spacer()
       }
       .padding(.trailing)
+    }
+    .sheet(isPresented: $debugMenuViewModel.showLogViewer) {
+      LogViewerView()
     }
   }
 }

@@ -25,11 +25,13 @@ import SwiftUI
 @MainActor
 class DebugMenuViewModel {
   public var showDebugMenu: Bool
+  public var showLogViewer: Bool
   public var mockDeviceKitViewModel: MockDeviceKitView.ViewModel
 
   init(mockDeviceKit: MockDeviceKitInterface) {
     self.mockDeviceKitViewModel = MockDeviceKitView.ViewModel(mockDeviceKit: mockDeviceKit)
     self.showDebugMenu = false
+    self.showLogViewer = false
   }
 }
 
