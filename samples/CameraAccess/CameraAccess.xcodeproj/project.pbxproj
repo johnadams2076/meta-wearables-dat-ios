@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		8F2D23802E856711002D0588 /* DebugMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2D237F2E856711002D0588 /* DebugMenuViewModel.swift */; };
+		AA0000012F99000100000001 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000002F99000100000001 /* AppLogger.swift */; };
+		AA0000032F99000100000002 /* LogViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000022F99000100000002 /* LogViewerView.swift */; };
 		8F8F00782E8ACB4600A4BDAF /* WearablesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F8F00772E8ACB4500A4BDAF /* WearablesViewModel.swift */; };
 		8FD96B7F2E6F0A9800F56AB1 /* CameraAccessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD96B792E6F0A9800F56AB1 /* CameraAccessApp.swift */; };
 		8FD96B812E6F0A9800F56AB1 /* HomeScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD96B722E6F0A9800F56AB1 /* HomeScreenView.swift */; };
@@ -71,6 +73,8 @@
 
 /* Begin PBXFileReference section */
 		3A3A3A3A3A3A3A3A3A3A3A3A /* CameraAccess.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CameraAccess.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000002F99000100000001 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		AA0000022F99000100000002 /* LogViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogViewerView.swift; sourceTree = "<group>"; };
 		8F2D237F2E856711002D0588 /* DebugMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugMenuViewModel.swift; sourceTree = "<group>"; };
 		8F8F00772E8ACB4500A4BDAF /* WearablesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WearablesViewModel.swift; sourceTree = "<group>"; };
 		8FD96B6F2E6F0A9800F56AB1 /* StreamSessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamSessionViewModel.swift; sourceTree = "<group>"; };
@@ -177,6 +181,7 @@
 				E6DA451B2E79A63100E3F688 /* MockDeviceKit */,
 				8FFD605E2E84A2F70035E446 /* DebugMenuView.swift */,
 				8FD96B722E6F0A9800F56AB1 /* HomeScreenView.swift */,
+				AA0000022F99000100000002 /* LogViewerView.swift */,
 				8FFD605F2E84A2F70035E446 /* MainAppView.swift */,
 				8FD96B742E6F0A9800F56AB1 /* PhotoPreviewView.swift */,
 				8FFD60532E849D0D0035E446 /* RegistrationView.swift */,
@@ -196,6 +201,7 @@
 				8FD96B772E6F0A9800F56AB1 /* Assets.xcassets */,
 				8FD96B782E6F0A9800F56AB1 /* CameraAccess.entitlements */,
 				8FD96B792E6F0A9800F56AB1 /* CameraAccessApp.swift */,
+				AA0000002F99000100000001 /* AppLogger.swift */,
 				8FD96B7B2E6F0A9800F56AB1 /* Info.plist */,
 			);
 			path = CameraAccess;
@@ -408,6 +414,8 @@
 				8FFD5FF52E8422580035E446 /* CircleButton.swift in Sources */,
 				8FFD5FF62E8422580035E446 /* CustomButton.swift in Sources */,
 				E6FD3BCE2EB4D53A00E7FE5D /* NonStreamView.swift in Sources */,
+				AA0000012F99000100000001 /* AppLogger.swift in Sources */,
+				AA0000032F99000100000002 /* LogViewerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
