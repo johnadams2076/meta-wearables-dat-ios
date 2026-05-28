@@ -54,6 +54,16 @@ class WearablesViewModel {
           category: "Registration",
           level: .debug
         )
+        if previousState == .registering && registrationState == .available {
+          AppLogger.shared.log(
+            "Registration returned to available before completion",
+            category: "Registration",
+            level: .warning
+          )
+          showError(
+            "Registration did not complete. In Meta AI, confirm the app approval flow, then try again. If it keeps failing, verify AppLinkURLScheme/MetaAppID/ClientToken and that Developer Mode is enabled."
+          )
+        }
         if self.showGettingStartedSheet == false && registrationState == .registered && previousState == .registering {
           self.showGettingStartedSheet = true
         }
