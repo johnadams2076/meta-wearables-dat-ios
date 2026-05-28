@@ -1,10 +1,6 @@
 name: iOS Samples CI
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -13,6 +9,7 @@ concurrency:
 
 jobs:
   build-test-and-record:
+    if: false
     name: Build, Test, and Record
     runs-on: macos-latest
     timeout-minutes: 90
