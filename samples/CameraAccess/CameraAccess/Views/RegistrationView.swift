@@ -22,23 +22,20 @@ struct RegistrationView: View {
 
   var body: some View {
     EmptyView()
-      // Handle callback URLs from the Meta mobile app
-      // This is essential for completing DAT SDK registration and permission flows
       .onOpenURL { url in
-        guard
-          let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-          // Check if this URL is related to DAT SDK workflows (contains metaWearablesAction query param)
-          components.queryItems?.contains(where: { $0.name == "metaWearablesAction" }) == true
-        else {
-          return // URL is not related to DAT SDK - ignore it
-        }
         Task {
           do {
-            // Pass the callback URL to the DAT SDK for processing
-            // This handles registration completion and permission grant responses
-            AppLogger.shared.log("Handling Meta AI callback URL", category: "Registration", level: .debug)
+            AppLogger.shared.log(
+              "Handling open URL: \(url.absoluteString)",
+              category: "Registration",
+              level: .debug
+            )
             _ = try await Wearables.shared.handleUrl(url)
-            AppLogger.shared.log("Meta AI callback handled successfully", category: "Registration", level: .info)
+            AppLogger.shared.log(
+              "Open URL handled successfully",
+              category: "Registration",
+              level: .info
+            )
           } catch let error as RegistrationError {
             AppLogger.shared.logError(error, context: .registrationCallback)
             viewModel.showError(error, context: .registrationCallback)

@@ -50,7 +50,7 @@ class WearablesViewModel {
         let previousState = self.registrationState
         self.registrationState = registrationState
         AppLogger.shared.log(
-          "Registration state → \(registrationState)",
+          "Registration state → \(registrationState.displayName)",
           category: "Registration",
           level: .debug
         )
@@ -182,6 +182,21 @@ class WearablesViewModel {
     updateFirmwareUpdateRequired()
     if compatibility == .deviceUpdateRequired {
       showError("Device '\(deviceName)' requires an update to work with this app")
+    }
+  }
+}
+
+private extension RegistrationState {
+  var displayName: String {
+    switch self {
+    case .available:
+      return "available"
+    case .registering:
+      return "registering"
+    case .registered:
+      return "registered"
+    case .unavailable:
+      return "unavailable"
     }
   }
 }
