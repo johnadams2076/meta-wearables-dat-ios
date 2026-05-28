@@ -27,7 +27,7 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>cameraaccess</string>
+				<string>comfunrunddcameraaccess</string>
 			</array>
 		</dict>
 	</array>
@@ -39,13 +39,13 @@
 	<dict>
 		<key>AppLinkURLScheme</key>
 		<!-- Tell DAT your URL scheme so it can be called back from Meta AI -->
-		<string>cameraaccess://</string>
+		<string>comfunrunddcameraaccess://</string>
 		<key>MetaAppID</key>
 		<!-- Without Developer Mode, this key will need to be set with ID from the app registered in Wearables Developer Center -->
-		<string>$(META_APP_ID)</string>
+		<string>1343594357688064</string>
 		<!-- Without Developer Mode, this key will need to be set with ClientToken from the app registered in Wearables Developer Center -->
 		<key>ClientToken</key>
-		<string>$(CLIENT_TOKEN)</string>
+		<string>AR|1343594357688064|5d60bd53e5716b3d6e5060320c704634</string>
 		<!-- Without Developer Mode, this key will need to be set with your Apple Developer Team ID - Set this in Xcode under Signing & Capabilities -->
 		<key>TeamID</key>
 		<string>$(DEVELOPMENT_TEAM)</string>
