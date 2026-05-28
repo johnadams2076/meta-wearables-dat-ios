@@ -1,6 +1,7 @@
+## yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: CameraAccess TestFlight Deploy
 
-"on":
+on:
   workflow_dispatch:
   push:
     tags:
@@ -15,9 +16,10 @@ jobs:
     env:
       PROJECT_PATH: samples/CameraAccess/CameraAccess.xcodeproj
       SCHEME: CameraAccess
-      ARCHIVE_PATH: ${{ runner.temp }}/build/CameraAccess.xcarchive
-      EXPORT_PATH: ${{ runner.temp }}/build/export
-      SIGNING_DIR: ${{ runner.temp }}/signing
+      BUILD_ROOT: ${{ github.workspace }}/.ci-build
+      ARCHIVE_PATH: ${{ github.workspace }}/.ci-build/CameraAccess.xcarchive
+      EXPORT_PATH: ${{ github.workspace }}/.ci-build/export
+      SIGNING_DIR: ${{ github.workspace }}/.ci-build/signing
 
     steps:
       - name: Checkout
