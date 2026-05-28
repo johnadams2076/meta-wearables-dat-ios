@@ -4,6 +4,8 @@ name: CameraAccess TestFlight Deploy
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "cameraaccess-v*"
 
@@ -132,6 +134,16 @@ jobs:
 
           echo "Provisioning profile entitlements look valid."
 
+      - name: Set CI build number
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Use UTC timestamp so every upload gets a fresh TestFlight build number.
+          BUILD_NUMBER="$(date -u +%Y%m%d%H%M%S)"
+          echo "BUILD_NUMBER=${BUILD_NUMBER}" >> "${GITHUB_ENV}"
+          echo "Using build number: ${BUILD_NUMBER}"
+
       - name: Build app for iOS devices (Release)
         shell: bash
         run: |
@@ -142,6 +154,7 @@ jobs:
             -scheme "${SCHEME}" \
             -configuration Release \
             -destination "generic/platform=iOS" \
+            CURRENT_PROJECT_VERSION="${BUILD_NUMBER}" \
             CODE_SIGNING_ALLOWED=NO \
             clean build
 
@@ -158,6 +171,7 @@ jobs:
             -archivePath "${ARCHIVE_PATH}" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ secrets.APP_BUNDLE_ID }}" \
+            CURRENT_PROJECT_VERSION="${BUILD_NUMBER}" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
