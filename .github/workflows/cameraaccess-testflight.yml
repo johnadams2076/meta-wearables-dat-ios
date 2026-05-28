@@ -93,6 +93,23 @@ jobs:
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "${SIGNING_DIR}/profile.plist")
           echo "PROFILE_NAME=${PROFILE_NAME}" >> "${GITHUB_ENV}"
 
+      - name: Validate provisioning profile entitlements
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          WIFI_INFO=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.developer.networking.wifi-info' "${SIGNING_DIR}/profile.plist" 2>/dev/null || true)
+          HOTSPOT=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.developer.networking.HotspotConfiguration' "${SIGNING_DIR}/profile.plist" 2>/dev/null || true)
+
+          if [[ "${WIFI_INFO}" != "true" || "${HOTSPOT}" != "true" ]]; then
+            echo "Provisioning profile is missing required entitlements."
+            echo "Required: com.apple.developer.networking.wifi-info=true and com.apple.developer.networking.HotspotConfiguration=true"
+            echo "Fix in Apple Developer: enable both capabilities on App ID ${APP_BUNDLE_ID}, regenerate App Store profile, re-upload IOS_MOBILEPROVISION_BASE64."
+            exit 1
+          fi
+
+          echo "Provisioning profile entitlements look valid."
+
       - name: Build app for iOS devices (Release)
         shell: bash
         run: |
@@ -120,6 +137,7 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ secrets.APP_BUNDLE_ID }}" \
             CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
             clean archive
 
