@@ -49,6 +49,11 @@ class WearablesViewModel {
       for await registrationState in wearables.registrationStateStream() {
         let previousState = self.registrationState
         self.registrationState = registrationState
+        AppLogger.shared.log(
+          "Registration state → \(registrationState)",
+          category: "Registration",
+          level: .debug
+        )
         if self.showGettingStartedSheet == false && registrationState == .registered && previousState == .registering {
           self.showGettingStartedSheet = true
         }
@@ -101,15 +106,18 @@ class WearablesViewModel {
 
   func connectGlasses() {
     guard registrationState != .registering else { return }
+    registrationState = .registering
     AppLogger.shared.log("Starting registration", category: "Registration", level: .info)
     Task { @MainActor in
       do {
         try await wearables.startRegistration()
       } catch let error as RegistrationError {
         AppLogger.shared.logError(error, context: .registrationStart)
+        registrationState = wearables.registrationState
         showError(error, context: .registrationStart)
       } catch {
         AppLogger.shared.logError(error, context: .registrationStart)
+        registrationState = wearables.registrationState
         showError(error, context: .registrationStart)
       }
     }
