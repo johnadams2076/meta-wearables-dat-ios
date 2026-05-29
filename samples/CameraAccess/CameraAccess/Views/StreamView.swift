@@ -48,78 +48,79 @@ struct StreamView: View {
           .foregroundStyle(.white)
       }
 
-      // Bottom controls layer
-
+      // Overlay + controls
       VStack {
         HStack {
           Spacer()
-          Button(showOverlay ? "Hide Overlay" : "Show Overlay") {
-            showOverlay.toggle()
+          Button {
+            Task { await copyVisibleTextToClipboard() }
+          } label: {
+            Label(
+              isCopying ? "Copying..." : (copied ? "Copied" : "Copy"),
+              systemImage: isCopying ? "hourglass" : (copied ? "checkmark" : "doc.on.doc")
+            )
           }
           .buttonStyle(.borderedProminent)
+          .disabled(isCopying)
         }
         .padding(.top, 20)
 
-        if showOverlay {
-          HStack {
-                .font(.headline)
-                .foregroundStyle(.white)
+        Spacer()
 
-                Button {
-                  Task { await copyVisibleTextToClipboard() }
-                } label: {
-                  Label(
-                    isCopying ? "Copying..." : (copied ? "Copied" : "Copy"),
-                    systemImage: isCopying ? "hourglass" : (copied ? "checkmark" : "doc.on.doc")
-                  )
-                .foregroundStyle(.white.opacity(0.95))
+        VStack(alignment: .leading, spacing: 8) {
+          Text("Clipboard")
+            .font(.headline)
+            .foregroundStyle(.white)
 
-                .disabled(isCopying)
-              Text("Registration: \(registrationStatusText)")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.95))
-              Spacer()
+          Text(copiedText)
+            .font(.footnote)
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .lineLimit(6)
 
-              VStack(alignment: .leading, spacing: 8) {
-                Text("Clipboard")
-                  .font(.headline)
-                  .foregroundStyle(.white)
-
-                Text(copiedText)
-                  .font(.footnote)
-                  .foregroundStyle(.white)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-                  .lineLimit(6)
-
-                if let statusMessage {
-                  Text(statusMessage)
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.9))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-              }
-              .padding(12)
-              .background(.black.opacity(0.45))
-              .clipShape(RoundedRectangle(cornerRadius: 12))
-
-              Spacer()
-
-              HStack(spacing: 8) {
-                CustomButton(
-                  title: "Stop streaming",
-                  style: .destructive,
-                  isDisabled: false
-                ) {
-                  Task {
-                    await viewModel.stopSession()
-                  }
-                }
-
-                CircleButton(icon: "camera.fill", text: nil) {
-                  viewModel.capturePhoto()
-                }
-                .accessibilityIdentifier("capture_photo_button")
+          if let statusMessage {
+            Text(statusMessage)
+              .font(.caption)
+              .foregroundStyle(.white.opacity(0.9))
+              .frame(maxWidth: .infinity, alignment: .leading)
+          }
         }
+        .padding(12)
+        .background(.black.opacity(0.45))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+        Spacer()
+
+        HStack(spacing: 8) {
+          CustomButton(
+            title: "Stop streaming",
+            style: .destructive,
+            isDisabled: false
+          ) {
+            Task {
+              await viewModel.stopSession()
+            }
+          }
+
+          CircleButton(icon: "camera.fill", text: nil) {
+            viewModel.capturePhoto()
+          }
+          .accessibilityIdentifier("capture_photo_button")
+        }
+      }
+      .padding(.all, 24)
+    }
+    .onDisappear {
+      Task {
+        if viewModel.streamingStatus != .stopped {
+          await viewModel.stopSession()
+        }
+      }
+    }
+    .sheet(isPresented: $viewModel.showPhotoPreview) {
+      if let photo = viewModel.capturedPhoto {
+        PhotoPreviewView(
+          photo: photo,
           onDismiss: {
             viewModel.dismissPhotoPreview()
           }
