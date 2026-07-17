@@ -15,6 +15,12 @@ Note: pull requests are not imported into the GitHub directory in the usual way.
 5. Make sure your code lints.
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
+### Issue traceability
+
+- Follow the repository branch naming pattern exactly. If work is tied to an issue key (for example `FUN-1`), include it as early as the pattern permits: immediately after any required prefix, or first when there is no required prefix.
+- Include the same issue key in the pull request title as a distinct token.
+- Include a link to the original issue in the pull request description (for example: `https://linear.app/origresearch/issue/FUN-1/tell`).
+
 ## Contributor License Agreement ("CLA")
 In order to accept your pull request, we need you to submit a CLA. You only need
 to do this once to work on any of Meta's open source projects.
