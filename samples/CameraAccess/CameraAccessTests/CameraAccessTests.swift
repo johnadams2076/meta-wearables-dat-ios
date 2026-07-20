@@ -170,6 +170,40 @@ final class ViewModelIntegrationTests: XCTestCase {
     XCTAssertFalse(viewModel.isStreaming)
     XCTAssertTrue([.stopped, .waiting].contains(viewModel.streamingStatus))
   }
+
+  func testPaintingPhotoProcessorConvertsNormalizedRectToImageCoordinates() {
+    let cropRect = PaintingPhotoProcessor.cropRect(
+      for: CGRect(x: 0.1, y: 0.2, width: 0.5, height: 0.25),
+      imageSize: CGSize(width: 200, height: 100)
+    )
+
+    XCTAssertEqual(cropRect.origin.x, 20, accuracy: 0.5)
+    XCTAssertEqual(cropRect.origin.y, 55, accuracy: 0.5)
+    XCTAssertEqual(cropRect.size.width, 100, accuracy: 0.5)
+    XCTAssertEqual(cropRect.size.height, 25, accuracy: 0.5)
+  }
+
+  func testPaintingPhotoProcessorCropsImageToDetectedBounds() {
+    let format = UIGraphicsImageRendererFormat.default()
+    format.scale = 1
+    let renderer = UIGraphicsImageRenderer(size: CGSize(width: 200, height: 100), format: format)
+    let image = renderer.image { context in
+      UIColor.systemBlue.setFill()
+      context.fill(CGRect(x: 0, y: 0, width: 200, height: 100))
+    }
+
+    let croppedImage = PaintingPhotoProcessor.cropImage(
+      image,
+      to: CGRect(x: 0.25, y: 0.25, width: 0.5, height: 0.5)
+    )
+
+    guard let croppedImage else {
+      return XCTFail("Expected cropImage to return a cropped image")
+    }
+
+    XCTAssertEqual(croppedImage.size.width, 100, accuracy: 0.5)
+    XCTAssertEqual(croppedImage.size.height, 50, accuracy: 0.5)
+  }
 }
 
 // MARK: - Test Helpers

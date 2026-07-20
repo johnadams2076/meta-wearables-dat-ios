@@ -9,7 +9,9 @@
 import MWDATCamera
 import MWDATCore
 import Observation
+import Photos
 import SwiftUI
+import Vision
 
 enum StreamingStatus {
   case streaming
@@ -45,6 +47,7 @@ final class StreamSessionViewModel {
   private let sessionManager: DeviceSessionManager
   private let wearables: WearablesInterface
   private let isUITestRun: Bool
+  private let isTestRun: Bool
   private var stream: MWDATCamera.Stream?
   private var frameSkipCounter: Int = 0
 
@@ -59,6 +62,8 @@ final class StreamSessionViewModel {
     self.wearables = wearables
     self.sessionManager = DeviceSessionManager(wearables: wearables)
     self.isUITestRun = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+    self.isTestRun =
+      self.isUITestRun || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
   }
 
   // MARK: - Public API
@@ -253,9 +258,33 @@ final class StreamSessionViewModel {
 
   private func handlePhotoData(_ data: PhotoData) {
     isCapturingPhoto = false
-    if let image = UIImage(data: data.data) {
+    guard let image = UIImage(data: data.data) else { return }
+
+    if isTestRun {
       capturedPhoto = image
       showPhotoPreview = true
+      return
+    }
+
+    Task {
+      let result = await PaintingPhotoProcessor.processCapturedPhoto(image)
+      capturedPhoto = result.image
+      showPhotoPreview = true
+
+      if let saveError = result.saveError {
+        AppLogger.shared.log(
+          "Captured photo could not be auto-saved: \(saveError.localizedDescription)",
+          category: "Photo",
+          level: .error
+        )
+        showError("The photo was captured but could not be saved automatically. \(saveError.localizedDescription)")
+      } else {
+        AppLogger.shared.log(
+          "Captured photo auto-saved successfully",
+          category: "Photo",
+          level: .info
+        )
+      }
     }
   }
 
@@ -271,5 +300,130 @@ final class StreamSessionViewModel {
     errorMessage = message
     showError = true
   }
+}
 
+enum PaintingPhotoProcessor {
+  struct ProcessedPhoto {
+    let image: UIImage
+    let saveError: Error?
+  }
+
+  enum SaveError: LocalizedError {
+    case permissionDenied
+    case encodingFailed
+    case saveFailed
+
+    var errorDescription: String? {
+      switch self {
+      case .permissionDenied:
+        return "Photo Library access was denied."
+      case .encodingFailed:
+        return "The captured image could not be prepared for saving."
+      case .saveFailed:
+        return "The cropped painting could not be written to the Photo Library."
+      }
+    }
+  }
+
+  static func processCapturedPhoto(_ image: UIImage) async -> ProcessedPhoto {
+    let processedImage = detectPainting(in: image).flatMap { cropImage(image, to: $0) } ?? image
+
+    do {
+      try await saveToPhotoLibrary(processedImage)
+      return ProcessedPhoto(image: processedImage, saveError: nil)
+    } catch {
+      return ProcessedPhoto(image: processedImage, saveError: error)
+    }
+  }
+
+  static func detectPainting(in image: UIImage) -> CGRect? {
+    guard let cgImage = cgImage(from: image) else { return nil }
+
+    let request = VNDetectRectanglesRequest()
+    request.maximumObservations = 1
+    request.minimumConfidence = 0.75
+    request.minimumAspectRatio = 0.5
+    request.minimumSize = 0.2
+    request.quadratureTolerance = 20
+
+    let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+
+    do {
+      try handler.perform([request])
+      return request.results?.first?.boundingBox
+    } catch {
+      return nil
+    }
+  }
+
+  static func cropRect(for normalizedRect: CGRect, imageSize: CGSize) -> CGRect {
+    let imageRect = CGRect(origin: .zero, size: imageSize)
+    let cropRect = CGRect(
+      x: normalizedRect.origin.x * imageSize.width,
+      y: (1 - normalizedRect.origin.y - normalizedRect.height) * imageSize.height,
+      width: normalizedRect.width * imageSize.width,
+      height: normalizedRect.height * imageSize.height
+    )
+
+    return cropRect.integral.intersection(imageRect)
+  }
+
+  static func cropImage(_ image: UIImage, to normalizedRect: CGRect) -> UIImage? {
+    guard let cgImage = cgImage(from: image) else { return nil }
+
+    let pixelSize = CGSize(width: cgImage.width, height: cgImage.height)
+    let cropRect = cropRect(for: normalizedRect, imageSize: pixelSize)
+    guard !cropRect.isNull, !cropRect.isEmpty else { return nil }
+    guard let croppedCGImage = cgImage.cropping(to: cropRect) else { return nil }
+
+    return UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
+  }
+
+  private static func cgImage(from image: UIImage) -> CGImage? {
+    if let cgImage = image.cgImage {
+      return cgImage
+    }
+
+    let format = UIGraphicsImageRendererFormat.default()
+    format.scale = 1
+    let renderedImage = UIGraphicsImageRenderer(size: image.size, format: format).image { _ in
+      image.draw(in: CGRect(origin: .zero, size: image.size))
+    }
+
+    return renderedImage.cgImage
+  }
+
+  private static func saveToPhotoLibrary(_ image: UIImage) async throws {
+    let authorizationStatus = await requestPhotoLibraryAuthorization()
+    guard authorizationStatus == .authorized || authorizationStatus == .limited else {
+      throw SaveError.permissionDenied
+    }
+
+    guard let imageData = image.jpegData(compressionQuality: 0.95) else {
+      throw SaveError.encodingFailed
+    }
+
+    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+      PHPhotoLibrary.shared().performChanges({
+        let request = PHAssetCreationRequest.forAsset()
+        request.addResource(with: .photo, data: imageData, options: nil)
+      }) { success, error in
+        if let error {
+          continuation.resume(throwing: error)
+        } else if success {
+          continuation.resume(returning: ())
+        } else {
+          continuation.resume(throwing: SaveError.saveFailed)
+        }
+      }
+    }
+  }
+
+  private static func requestPhotoLibraryAuthorization() async -> PHAuthorizationStatus {
+    await withCheckedContinuation { continuation in
+      PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+        continuation.resume(returning: status)
+      }
+    }
+  }
 }
