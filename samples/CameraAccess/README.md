@@ -7,6 +7,7 @@ A sample iOS application demonstrating integration with Meta Wearables Device Ac
 - Connect to Meta AI glasses
 - Stream camera feed from the device
 - Capture photos from glasses
+- Automatically crop and save detected paintings from captured photos
 - Share captured photos
 - Open firmware and glasses app update flows when required
 
@@ -36,7 +37,7 @@ A sample iOS application demonstrating integration with Meta Wearables Device Ac
 1. Once connected, the camera stream from the device will be displayed
 1. Use the on-screen controls to:
    - Capture photos
-   - View and save captured photos
+   - View captured photos after the app automatically crops and saves detected paintings
    - Disconnect from the device
 1. If a firmware update is required, tap "Update firmware" from the connection screen.
 1. If session start reports that the app on the glasses is outdated, tap "Update app on glasses" from the connection screen.
